@@ -43,7 +43,7 @@ CREATE TABLE [User] (
 );
 
 CREATE TABLE [RefreshToken] (
-    [Id] INT IDENTITY(1,1),
+    [Id] UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
     [UserId] INT NOT NULL,
     [TokenHash] NVARCHAR(200) NOT NULL,
     [ExpiresAt] DATETIME NOT NULL,
