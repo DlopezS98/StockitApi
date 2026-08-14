@@ -1,0 +1,6 @@
+@StockitApi_HostAddress = http://localhost:5090
+
+GET {{StockitApi_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
