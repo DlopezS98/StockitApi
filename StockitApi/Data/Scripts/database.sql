@@ -55,3 +55,184 @@ CREATE TABLE [RefreshToken] (
     CONSTRAINT PK__REFRESHTOKENS__ID PRIMARY KEY (Id),
     CONSTRAINT FK__REFRESHTOKENS__USERID FOREIGN KEY (UserId) REFERENCES [User](Id)
 );
+
+CREATE TABLE Warehouse (
+    Id INT IDENTITY(1,1) NOT NULL,
+    Name NVARCHAR(100) NOT NULL,
+    Location NVARCHAR(200) NULL,
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAt DATETIME NOT NULL DEFAULT GETUTCDATE(),
+    CreatedBy INT NULL,
+    CONSTRAINT PK__WAREHOUSES__ID PRIMARY KEY (Id)
+);
+
+CREATE TABLE Category (
+    Id INT IDENTITY(1,1) NOT NULL,
+    Name NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(200) NULL,
+    IsActive BIT NOT NULL DEFAULT 1,
+    ParentCategoryId INT NULL,
+    CONSTRAINT PK__CATEGORIES__ID PRIMARY KEY (Id),
+    CONSTRAINT FK__CATEGORIES__PARENTCATEGORYID FOREIGN KEY (ParentCategoryId) REFERENCES Category(Id)
+);
+
+CREATE TABLE Product (
+    Id INT IDENTITY(1,1) NOT NULL,
+    Name NVARCHAR(100) NOT NULL,
+    Description NVARCHAR(200) NULL,
+    Barcode NVARCHAR(64) NOT NULL,
+    QrCode NVARCHAR(128) NOT NULL,
+    Price DECIMAL(18, 2) NOT NULL,
+    CategoryId INT NOT NULL,
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAt DATETIME NOT NULL DEFAULT GETUTCDATE(),
+    UpdatedAt DATETIME NULL,
+    CreatedBy INT NULL,
+    CONSTRAINT PK__PRODUCTS__ID PRIMARY KEY (Id),
+    CONSTRAINT FK__PRODUCTS__CATEGORYID FOREIGN KEY (CategoryId) REFERENCES Category(Id),
+    CONSTRAINT UQ__PRODUCTS__BARCODE UNIQUE (Barcode),
+    CONSTRAINT UQ__PRODUCTS__QRCODE UNIQUE (QrCode)
+);
+
+CREATE INDEX IDX_Product_Name ON Product(Name);
+CREATE INDEX IDX_Product_Barcode ON Product(Barcode);
+CREATE INDEX IDX_Product_QrCode ON Product(QrCode);
+
+CREATE TABLE Inventory (
+    Id INT IDENTITY(1,1) NOT NULL,
+    ProductId INT NOT NULL,
+    WarehouseId INT NOT NULL,
+    Quantity INT NOT NULL DEFAULT 0,
+    CONSTRAINT PK__INVENTORIES__ID PRIMARY KEY (Id),
+    CONSTRAINT FK__INVENTORIES__PRODUCTID FOREIGN KEY (ProductId) REFERENCES Product(Id),
+    CONSTRAINT FK__INVENTORIES__WAREHOUSEID FOREIGN KEY (WarehouseId) REFERENCES Warehouse(Id),
+    CONSTRAINT UQ__INVENTORIES__PRODUCTID_WAREHOUSEID UNIQUE (ProductId, WarehouseId)
+);
+CREATE INDEX IX_Inventory_ProductId ON Inventory(ProductId);
+CREATE INDEX IX_Inventory_WarehouseId ON Inventory(WarehouseId);
+
+CREATE TABLE StockMovement (
+    Id BIGINT IDENTITY(1,1) NOT NULL,
+    ProductId INT NOT NULL,
+    WarehouseId INT NOT NULL,
+    Quantity INT NOT NULL,
+    Reason NVARCHAR(250) NULL,
+    MovementType NVARCHAR(50) NOT NULL, -- e.g., "Sale", "Restock", "Transfer", "Adjustment", "Return"
+    MovementDate DATETIME NOT NULL DEFAULT GETUTCDATE(),
+    CreatedBy INT NULL,
+    CONSTRAINT PK__STOCKMOVEMENTS__ID PRIMARY KEY (Id),
+    CONSTRAINT FK__STOCKMOVEMENTS__PRODUCTID FOREIGN KEY (ProductId) REFERENCES Product(Id),
+    CONSTRAINT FK__STOCKMOVEMENTS__WAREHOUSEID FOREIGN KEY (WarehouseId) REFERENCES Warehouse(Id),
+    CONSTRAINT FK__STOCKMOVEMENTS__CREATEDBY FOREIGN KEY (CreatedBy) REFERENCES [User](Id),
+    CONSTRAINT CHK__STOCKMOVEMENTS__MOVEMENTTYPE CHECK (MovementType IN ('Sale', 'Restock', 'Transfer', 'Adjustment', 'Return')),
+    CONSTRAINT CHK__STOCKMOVEMENTS__QUANTITY CHECK (Quantity <> 0),
+);
+
+CREATE TABLE Customer (
+    Id INT IDENTITY(1,1) NOT NULL,
+    Name NVARCHAR(100) NOT NULL,
+    Email NVARCHAR(150) NULL,
+    Phone NVARCHAR(20) NULL,
+    Address NVARCHAR(250) NULL,
+    IsActive BIT NOT NULL DEFAULT 1,
+    CreatedAt DATETIME NOT NULL DEFAULT GETUTCDATE(),
+    CreatedBy INT NULL,
+    CONSTRAINT PK__CUSTOMERS__ID PRIMARY KEY (Id)
+);
+
+CREATE TABLE Invoice (
+    Id INT IDENTITY(1,1) NOT NULL,
+    InvoiceNumber NVARCHAR(30) NOT NULL UNIQUE,     -- INV-2026-000123
+    CustomerId INT NOT NULL,
+    WarehouseId INT NOT NULL,
+    SellerId INT NOT NULL, -- The user who created the invoice
+    Subtotal DECIMAL(18, 2) NOT NULL,
+    DiscountAmount DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    TotalAmount DECIMAL(18, 2) NOT NULL,
+    Status NVARCHAR(50) NOT NULL DEFAULT 'Pending', -- e.g., "Pending", "Paid", "Refunded", "Partially Paid", "Overdue", "Void".
+    Currency NVARCHAR(10) NOT NULL DEFAULT 'USD',
+    Notes NVARCHAR(500) NULL,
+    IssuedAt DATETIME NOT NULL DEFAULT GETUTCDATE(), -- The date and time when the invoice was issued,
+    DueDate DATETIME NULL, -- The date and time when the invoice is due for payment
+    CreatedAt DATETIME NOT NULL DEFAULT GETUTCDATE(), -- The date and time when the invoice record was created
+    UpdatedAt DATETIME NULL, -- The date and time when the invoice record was last updated
+    CONSTRAINT PK__INVOICES__ID PRIMARY KEY (Id),
+    CONSTRAINT FK__INVOICES__CUSTOMERID FOREIGN KEY (CustomerId) REFERENCES Customer(Id),
+    CONSTRAINT FK__INVOICES__WAREHOUSEID FOREIGN KEY (WarehouseId) REFERENCES Warehouse(Id),
+    CONSTRAINT FK__INVOICES__SELLERID FOREIGN KEY (SellerId) REFERENCES [User](Id),
+    CONSTRAINT CHK__INVOICES__STATUS CHECK (Status IN ('Pending', 'Paid', 'Refunded', 'Partially Paid', 'Overdue', 'Void'))
+);
+
+CREATE INDEX IX_Invoices_Status ON Invoices(Status);
+CREATE INDEX IX_Invoices_IssuedAt ON Invoices(IssuedAt);
+
+CREATE TABLE InvoiceItem (
+    Id INT IDENTITY(1,1) NOT NULL,
+    InvoiceId INT NOT NULL,
+    ProductId INT NOT NULL,
+    Quantity INT NOT NULL,
+    UnitPrice DECIMAL(18, 2) NOT NULL,
+    DiscountAmount DECIMAL(18, 2) NOT NULL DEFAULT 0,
+    TotalAmount DECIMAL(18, 2) NOT NULL,
+    CONSTRAINT PK__INVOICEITEMS__ID PRIMARY KEY (Id),
+    CONSTRAINT FK__INVOICEITEMS__INVOICEID FOREIGN KEY (InvoiceId) REFERENCES Invoice(Id),
+    CONSTRAINT FK__INVOICEITEMS__PRODUCTID FOREIGN KEY (ProductId) REFERENCES Product(Id)
+);
+
+CREATE TABLE Payment (
+    Id INT IDENTITY(1,1) NOT NULL,
+    InvoiceId INT NOT NULL,
+    Amount DECIMAL(18, 2) NOT NULL,
+    PaymentMethod NVARCHAR(50) NOT NULL, -- e.g., "Cash", "Credit Card", "Bank Transfer", "PayPal", "Check",
+    ReferenceNumber NVARCHAR(100) NULL, -- Optional reference number for the payment (e.g., transaction ID)
+    Notes NVARCHAR(250) NULL, -- Optional notes about the payment
+    PaymentDate DATETIME NOT NULL DEFAULT GETUTCDATE(),
+    CreatedBy INT NULL,
+    PaidAt DATETIME NULL, -- The date and time when the payment was processed
+    CONSTRAINT PK__PAYMENTS__ID PRIMARY KEY (Id),
+    CONSTRAINT FK__PAYMENTS__INVOICEID FOREIGN KEY (InvoiceId) REFERENCES Invoice(Id),
+    CONSTRAINT FK__PAYMENTS__CREATEDBY FOREIGN KEY (CreatedBy) REFERENCES [User](Id)
+);
+
+CREATE TABLE AuditLog (
+    Id UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+    UserId INT NOT NULL,
+    [Action] NVARCHAR(100) NOT NULL,
+    EntityType NVARCHAR(100) NOT NULL,
+    EntityId INT NOT NULL,
+    [Changes] NVARCHAR(MAX) NULL, -- JSON representation of changes
+    [Timestamp] DATETIME NOT NULL DEFAULT GETUTCDATE(),
+    CONSTRAINT PK__AUDITLOGS__ID PRIMARY KEY (Id),
+    CONSTRAINT FK__AUDITLOGS__USERID FOREIGN KEY (UserId) REFERENCES [User](Id)
+);
+CREATE INDEX IX_AuditLog_Timestamp ON AuditLog(Timestamp);
+
+CREATE TABLE [Notification] (
+    Id UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+    UserId INT NOT NULL,
+    Title NVARCHAR(200) NOT NULL,
+    [Message] NVARCHAR(MAX) NOT NULL,
+    IsRead BIT NOT NULL DEFAULT 0,
+    CreatedAt DATETIME NOT NULL DEFAULT GETUTCDATE(),
+    CONSTRAINT PK__NOTIFICATIONS__ID PRIMARY KEY (Id),
+    CONSTRAINT FK__NOTIFICATIONS__USERID FOREIGN KEY (UserId) REFERENCES [User](Id)
+);
+CREATE INDEX IX_Notification_UserId ON [Notification](UserId);
+CREATE INDEX IX_Notification_IsRead ON [Notification](IsRead);
+CREATE INDEX IX_Notification_CreatedAt ON [Notification](CreatedAt);
+
+CREATE TABLE ApiUsageLog (
+    Id UNIQUEIDENTIFIER NOT NULL DEFAULT NEWID(),
+    UserId INT NULL,
+    Endpoint NVARCHAR(200) NOT NULL,
+    HttpMethod NVARCHAR(10) NOT NULL,
+    StatusCode INT NOT NULL,
+    IpAddress NVARCHAR(45) NOT NULL,
+    UserAgent NVARCHAR(200) NULL,
+    ResponseTimeMs INT NOT NULL,
+    CreatedAt DATETIME NOT NULL DEFAULT GETUTCDATE(),
+    CONSTRAINT PK__APIUSAGELOGS__ID PRIMARY KEY (Id),
+    CONSTRAINT FK__APIUSAGELOGS__USERID FOREIGN KEY (UserId) REFERENCES [User](Id)
+);
+CREATE INDEX IX_ApiUsageLog_UserId ON ApiUsageLog(UserId);
+CREATE INDEX IX_ApiUsageLog_CreatedAt ON ApiUsageLog(CreatedAt);
