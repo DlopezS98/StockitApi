@@ -236,3 +236,66 @@ CREATE TABLE ApiUsageLog (
 );
 CREATE INDEX IX_ApiUsageLog_UserId ON ApiUsageLog(UserId);
 CREATE INDEX IX_ApiUsageLog_CreatedAt ON ApiUsageLog(CreatedAt);
+
+-- ====================== Seed: Roles, Permissions, and RolePermissions ======================
+INSERT INTO Roles (Name, Description) VALUES
+('Admin','Full system access'),
+('Manager','Products, inventory, invoices, analytics'),
+('SalesRep','Sell products, create invoices'),
+('WarehouseStaff','Manage stock'),
+('Auditor','Read-only oversight');
+
+INSERT INTO Permissions (Code, Description) VALUES
+('users.read','View users'),
+('users.write','Create/edit users'),
+('users.delete','Deactivate users'),
+('roles.manage','Manage roles/permissions'),
+('products.read','View products'),
+('products.write','Create/edit products'),
+('inventory.read','View stock levels'),
+('inventory.adjust','Adjust stock'),
+('customers.read','View customers'),
+('customers.write','Create/edit customers'),
+('invoices.create','Create/issue invoices'),
+('invoices.read','View invoices'),
+('invoices.update','Update invoices'),
+('invoices.void','Void invoices'),
+('invoices.export','Export invoices'),
+('analytics.read','View analytics'),
+('logs.read','View audit logs'),
+('metrics.read','View usage metrics');
+
+-- Admin: everything
+INSERT INTO RolePermissions (RoleId, PermissionId)
+SELECT (SELECT Id FROM Roles WHERE Name='Admin'), Id FROM Permissions;
+
+-- Manager
+INSERT INTO RolePermissions (RoleId, PermissionId)
+SELECT (SELECT Id FROM Roles WHERE Name='Manager'), Id FROM Permissions
+WHERE Code IN ('users.read','products.read','products.write','inventory.read','inventory.adjust',
+'customers.read','customers.write','invoices.create','invoices.read','invoices.void','invoices.export',
+'analytics.read','metrics.read');
+
+-- SalesRep
+INSERT INTO RolePermissions (RoleId, PermissionId)
+SELECT (SELECT Id FROM Roles WHERE Name='SalesRep'), Id FROM Permissions
+WHERE Code IN ('products.read','inventory.read','customers.read','customers.write',
+'invoices.create','invoices.read');
+
+-- WarehouseStaff
+INSERT INTO RolePermissions (RoleId, PermissionId)
+SELECT (SELECT Id FROM Roles WHERE Name='WarehouseStaff'), Id FROM Permissions
+WHERE Code IN ('products.read','inventory.read','inventory.adjust','invoices.read');
+
+-- Auditor
+INSERT INTO RolePermissions (RoleId, PermissionId)
+SELECT (SELECT Id FROM Roles WHERE Name='Auditor'), Id FROM Permissions
+WHERE Code IN ('users.read','products.read','inventory.read','customers.read','invoices.read',
+'invoices.export','analytics.read','logs.read','metrics.read');
+
+-- Default warehouse + admin user (password 'Admin123!' hashed with BCrypt at app bootstrap, placeholder here)
+INSERT INTO Warehouses (Name, Location) VALUES ('Main Warehouse', '123 Main St, Anytown, Nicaragua');
+INSERT INTO Users (Username, Email, PasswordHash, FullName, RoleId, IsActive)
+VALUES ('Danny Lopez','danny.lopez@stockit.com','$2a$11$REPLACE_WITH_BCRYPT_HASH','System Admin',
+        (SELECT Id FROM Roles WHERE Name='Admin'), 1);
+GO
