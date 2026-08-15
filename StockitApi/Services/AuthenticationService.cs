@@ -2,6 +2,7 @@
 using StockitApi.Dtos;
 using StockitApi.Entities;
 using StockitApi.Interfaces;
+using StockitApi.Specifications;
 
 namespace StockitApi.Services;
 
@@ -23,7 +24,7 @@ public class AuthenticationService(
         if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
             throw new ArgumentException("Email and password must be provided.");
 
-        User? user = await _unitOfWork.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+        User? user = await _unitOfWork.Users.GetFirstAsync(new UserWithPermissionsSpecification(request.Email));
         bool verifyPassword(User _user) => _passwordHasher.VerifyPassword(
             _user.PasswordHash,
             request.Password,
@@ -57,7 +58,7 @@ public class AuthenticationService(
         if (refreshTokenEntity.IsRevoked || refreshTokenEntity.ExpiresAt <= _timeProvider.GetUtcNow().UtcDateTime)
             throw new UnauthorizedAccessException("Refresh token is expired or revoked.");
 
-        User? user = await _unitOfWork.Users.GetByIdAsync(refreshTokenEntity.UserId);
+        User? user = await _unitOfWork.Users.GetFirstAsync(new UserWithPermissionsSpecification(refreshTokenEntity.UserId));
         if (user is null) throw new UnauthorizedAccessException("User not found.");
 
         (string token, DateTime expiresAtUtc) = _tokenService.GenerateToken(user);

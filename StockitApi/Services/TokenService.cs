@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using StockitApi.Authorization;
 using StockitApi.Dtos;
 using StockitApi.Entities;
 using StockitApi.Interfaces;
@@ -44,6 +45,12 @@ public class TokenService(IOptions<JwtOptions> jwtOptions, TimeProvider timeProv
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Name, user.FullName),
         };
+
+        IEnumerable<string> permissionCodes = user.Role!.RolePermissions
+            .Select(rp => rp.Permission!.Code)
+            .Where(code => code is not null)! ?? [];
+        claims.AddRange(permissionCodes.Select(code => new Claim(PermissionAuthorization.PermissionClaimType, code)));
+
         var token = new JwtSecurityToken(
             issuer: _jwtOptions.Issuer,
             audience: _jwtOptions.Audience,
