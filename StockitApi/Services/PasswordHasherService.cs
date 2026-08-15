@@ -27,7 +27,7 @@ public class PasswordHasherService : IPasswordHasherService
         return salt;
     }
 
-    public bool VerifyHashedPassword(string hashedPassword, string providedPassword, byte[] salt)
+    public bool VerifyPassword(string hashedPassword, string providedPassword, byte[] salt)
     {
         var hashed = SHA256.HashData(Encoding.UTF8.GetBytes(providedPassword + Convert.ToBase64String(salt)));
         return Convert.ToBase64String(hashed) == hashedPassword;
