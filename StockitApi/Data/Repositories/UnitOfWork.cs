@@ -16,11 +16,16 @@ public class UnitOfWork : IUnitOfWork
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        return _context.SaveChangesAsync(cancellationToken);
     }
 
     public Task<int> SaveChangesAsync()
     {
-        throw new NotImplementedException();
+        return _context.SaveChangesAsync();
+    }
+
+    public void Dispose()
+    {
+        _context.Dispose();
     }
 }
