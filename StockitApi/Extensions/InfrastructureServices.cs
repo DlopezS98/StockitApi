@@ -21,7 +21,6 @@ public static class InfrastructureServices
         services.AddScoped<IAppRequestContext, AppRequestContext>();
         services.AddScoped<IPasswordHasherService, PasswordHasherService>();
         services.AddScoped<ITokenService, TokenService>();
-        services.AddScoped<IAuthenticationService, AuthenticationService>();
 
         return services;
     }
