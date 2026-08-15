@@ -191,7 +191,8 @@ CREATE TABLE Payment (
     PaidAt DATETIME NULL, -- The date and time when the payment was processed
     CONSTRAINT PK__PAYMENTS__ID PRIMARY KEY (Id),
     CONSTRAINT FK__PAYMENTS__INVOICEID FOREIGN KEY (InvoiceId) REFERENCES Invoice(Id),
-    CONSTRAINT FK__PAYMENTS__CREATEDBY FOREIGN KEY (CreatedBy) REFERENCES [User](Id)
+    CONSTRAINT FK__PAYMENTS__CREATEDBY FOREIGN KEY (CreatedBy) REFERENCES [User](Id),
+    CONSTRAINT CHK__PAYMENTS__PAYMENTMETHOD CHECK (PaymentMethod IN ('Cash', 'Credit Card', 'Bank Transfer', 'PayPal', 'Check'))
 );
 
 CREATE TABLE AuditLog (
