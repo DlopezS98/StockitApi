@@ -1,9 +1,11 @@
+using Microsoft.EntityFrameworkCore;
 using StockitApi.Data;
 using StockitApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddInfrastructureServices(builder.Configuration);
 builder.Services.AddApplicationServices();
 builder.Services.AddSingleton(TimeProvider.System);
@@ -16,6 +18,13 @@ builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
 var app = builder.Build();
+
+if (builder.Configuration.GetValue<bool>("ApplyMigrations"))
+{
+    using IServiceScope scope = app.Services.CreateScope();
+    StockitContext dbContext = scope.ServiceProvider.GetRequiredService<StockitContext>();
+    await dbContext.Database.MigrateAsync();
+}
 
 using (IServiceScope scope = app.Services.CreateScope())
 {
