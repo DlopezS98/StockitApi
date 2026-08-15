@@ -5,6 +5,7 @@ public class User : BaseEntity<int>
     required public string Username { get; set; }
     required public string Email { get; set; }
     required public string PasswordHash { get; set; }
+    required public string Salt { get; set; } = string.Empty;
     required public string FullName { get; set; }
     public int RoleId { get; set; }
     public bool IsActive { get; set; } = true;
