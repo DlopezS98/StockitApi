@@ -8,6 +8,8 @@ builder.Services.AddApplicationServices();
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddJwtAuthentication(builder.Configuration);
 
+builder.Services.AddPermissionAuthorization();
+
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -22,6 +24,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
