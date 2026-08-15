@@ -1,6 +1,7 @@
 using StockitApi.Interfaces;
 using StockitApi.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 
 namespace StockitApi.Data.Repositories;
 
@@ -38,9 +39,19 @@ public class EfRepository<TEntity, Tkey>(StockitContext context)
         return await _context.Set<TEntity>().FindAsync(id) is not null;
     }
 
+    public async Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate)
+    {
+        return await _context.Set<TEntity>().FirstOrDefaultAsync(predicate);
+    }
+
     public async Task<IReadOnlyList<TEntity>> GetAllAsync()
     {
         return await _context.Set<TEntity>().ToListAsync();
+    }
+
+    public async Task<IReadOnlyList<TEntity>> GetAsync(Expression<Func<TEntity, bool>> predicate)
+    {
+        return await _context.Set<TEntity>().Where(predicate).ToListAsync();
     }
 
     public async Task<TEntity?> GetByIdAsync(Tkey id)

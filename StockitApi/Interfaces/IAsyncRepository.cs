@@ -1,9 +1,12 @@
+using System.Linq.Expressions;
 using StockitApi.Entities;
 
 namespace StockitApi.Interfaces;
 
 public interface IAsyncRepository<TEntity, TKey> where TEntity : BaseEntity<TKey>
 {
+    Task<TEntity?> FirstOrDefaultAsync(Expression<Func<TEntity, bool>> predicate);
+    Task<IReadOnlyList<TEntity>> GetAsync(Expression<Func<TEntity, bool>> predicate);
     Task<TEntity?> GetByIdAsync(TKey id);
     Task<IReadOnlyList<TEntity>> GetAllAsync();
     Task<TEntity> AddAsync(TEntity entity);
