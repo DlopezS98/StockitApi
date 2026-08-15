@@ -6,6 +6,8 @@ public interface IUnitOfWork
 {
     IAsyncRepository<User, int> Users { get; }
     IAsyncRepository<RefreshToken, Guid> RefreshTokens { get; }
+    IAsyncRepository<Role, int> Roles { get; }
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     Task<int> SaveChangesAsync();
 }
