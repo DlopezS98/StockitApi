@@ -11,5 +11,7 @@ public class RefreshToken : BaseEntity<Guid>
     public string? UserAgent { get; set; }
     public string? DeviceName { get; set; }
 
+    public bool IsRevoked => RevokedAt.HasValue;
+
     public User? User { get; set; }
 }
