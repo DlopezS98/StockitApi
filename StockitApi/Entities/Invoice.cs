@@ -26,3 +26,18 @@ public class Invoice : BaseEntity<int>
     public ICollection<InvoiceItem> InvoiceItems { get; set; } = [];
     public ICollection<Payment> Payments { get; set; } = [];
 }
+
+public static class InvoiceStatus
+{
+    public const string Pending = "Pending";
+    public const string Paid = "Paid";
+    public const string Refunded = "Refunded";
+    public const string PartiallyPaid = "Partially Paid";
+    public const string Overdue = "Overdue";
+    public const string Void = "Void";
+
+    public static readonly HashSet<string> All =
+    [
+        Pending, Paid, Refunded, PartiallyPaid, Overdue, Void
+    ];
+}
