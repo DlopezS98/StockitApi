@@ -33,6 +33,15 @@ public class AuthController(IAuthenticationService authenticationService, IUserS
     }
 
     [Authorize]
+    [HttpPost("logout")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> Logout([FromBody] RefreshTokenRequest request)
+    {
+        await _authService.LogoutAsync(request.RefreshToken);
+        return NoContent();
+    }
+
+    [Authorize]
     [HttpPost("register")]
     [ProducesResponseType<UserResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)

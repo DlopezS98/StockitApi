@@ -80,6 +80,17 @@ public class AuthenticationService(
         return new TokenResponse(token, refreshTokenResult.RawToken, expiresAtUtc, refreshTokenResult.ExpiresAtUtc);
     }
 
+    public async Task LogoutAsync(string refreshToken)
+    {
+        string hashedToken = _tokenService.ComputeHash(refreshToken);
+        RefreshToken? refreshTokenEntity = await _unitOfWork.RefreshTokens.FirstOrDefaultAsync(rt => rt.TokenHash == hashedToken);
+        if (refreshTokenEntity is null || refreshTokenEntity.IsRevoked) return;
+
+        refreshTokenEntity.RevokedAt = _timeProvider.GetUtcNow().UtcDateTime;
+        await _unitOfWork.RefreshTokens.UpdateAsync(refreshTokenEntity);
+        await _unitOfWork.SaveChangesAsync();
+    }
+
     public async Task<UserResponse> RegisterAsync(RegisterRequest request)
     {
         string email = request.Email;
