@@ -18,4 +18,10 @@ public interface IAsyncRepository<TEntity, TKey> where TEntity : BaseEntity<TKey
     Task<List<TEntity>> UpdateAsync(IEnumerable<TEntity> entities);
     public Task<int> SaveChangesAsync();
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken);
+
+    // Specification pattern methods
+    Task<IReadOnlyList<TEntity>> ListAsync(ISpecification<TEntity> spec);
+    Task<int> CountAsync(ISpecification<TEntity> spec);
+    Task<bool> ExistsAsync(ISpecification<TEntity> spec);
+    Task<TEntity?> GetFirstAsync(ISpecification<TEntity> spec);
 }

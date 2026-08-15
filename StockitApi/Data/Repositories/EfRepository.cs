@@ -81,4 +81,35 @@ public class EfRepository<TEntity, Tkey>(StockitContext context)
         _context.Set<TEntity>().UpdateRange(entities);
         return Task.FromResult(entities.ToList());
     }
+
+    public async Task<bool> ExistsAsync(int id)
+    {
+        return await _context.Set<TEntity>().FindAsync(id) is not null;
+    }
+
+    public async Task<bool> ExistsAsync(ISpecification<TEntity> spec)
+    {
+        return await ApplySpecification(spec).AnyAsync();
+    }
+
+    public Task<TEntity?> GetFirstAsync(ISpecification<TEntity> spec)
+    {
+        return ApplySpecification(spec).FirstOrDefaultAsync();
+    }
+
+    public async Task<IReadOnlyList<TEntity>> ListAsync(ISpecification<TEntity> spec)
+    {
+        return await ApplySpecification(spec).ToListAsync();
+    }
+
+    public async Task<int> CountAsync(ISpecification<TEntity> spec)
+    {
+        return await ApplySpecification(spec).CountAsync();
+    }
+
+    private IQueryable<TEntity> ApplySpecification(ISpecification<TEntity> spec)
+    {
+        IQueryable<TEntity> query = SpecificationEvaluator<TEntity>.GetQuery(_context.Set<TEntity>().AsQueryable(), spec);
+        return query;
+    }
 }
