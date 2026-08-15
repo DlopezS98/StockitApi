@@ -50,12 +50,13 @@ public class EfRepository<TEntity, Tkey>(StockitContext context)
 
     public async Task<int> SaveChangesAsync()
     {
-        throw new NotImplementedException();
+        return await _context.SaveChangesAsync();
     }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken)
     {
-        throw new NotImplementedException();
+        cancellationToken.ThrowIfCancellationRequested();
+        return _context.SaveChangesAsync(cancellationToken);
     }
 
     public Task UpdateAsync(TEntity entity)
