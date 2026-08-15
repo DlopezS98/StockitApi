@@ -1,3 +1,3 @@
 namespace StockitApi.Dtos;
 
-public record AuthRequest(string Username, string Password);
+public record AuthRequest(string Email, string Password);
