@@ -12,7 +12,13 @@ public class AppRequestContext : IAppRequestContext
         _httpContextAccessor = httpContextAccessor;
     }
 
-    public string UserId => _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? string.Empty;
+    public int GetCurrentUserId()
+    {
+        var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (userIdClaim is not null && int.TryParse(userIdClaim, out int userId)) return userId;
+        
+        throw new InvalidOperationException("User ID claim is missing or invalid.");
+    }
     public string IpAddress => _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? string.Empty;
     public string UserAgent => _httpContextAccessor.HttpContext?.Request?.Headers.UserAgent.ToString() ?? string.Empty;
     public string DeviceName => _httpContextAccessor.HttpContext?.Request?.Headers["Device-Name"].ToString() ?? string.Empty;
