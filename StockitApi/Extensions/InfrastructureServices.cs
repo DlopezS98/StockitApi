@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using StockitApi.Interfaces;
 using StockitApi.Data.Repositories;
 using StockitApi.Models;
+using StockitApi.Services;
 
 namespace StockitApi.Extensions;
 
@@ -17,6 +18,7 @@ public static class InfrastructureServices
         services.Configure<JwtOptions>(configuration.GetSection(JwtOptions.SectionName));
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+        services.AddScoped<IAppRequestContext, AppRequestContext>();
 
         return services;
     }
