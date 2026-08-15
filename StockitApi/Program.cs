@@ -2,9 +2,9 @@ using StockitApi.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddInfrastructureServices(builder.Configuration);
-
 // Add services to the container.
+builder.Services.AddInfrastructureServices(builder.Configuration);
+builder.Services.AddSingleton(TimeProvider.System);
 
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
