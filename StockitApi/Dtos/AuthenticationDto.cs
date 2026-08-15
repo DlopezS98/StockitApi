@@ -1,10 +1,16 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace StockitApi.Dtos;
 
-public record AuthRequest(string Email, string Password);
+public record AuthRequest(
+    [Required, EmailAddress] string Email, 
+    [Required, MinLength(8)] string Password
+);
+
 public record RegisterRequest(
-    string Email, 
-    string Password, 
-    string FirstName, 
-    string LastName,
-    int RoleId
+    [Required, EmailAddress] string Email, 
+    [Required, MinLength(8)] string Password, 
+    [Required] string FirstName, 
+    [Required] string LastName,
+    [Required] int RoleId
 );
