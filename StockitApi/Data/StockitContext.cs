@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using StockitApi.Data.Configuration.Entities;
 using StockitApi.Entities;
 
 namespace StockitApi.Data;
@@ -27,6 +28,6 @@ public class StockitContext(DbContextOptions<StockitContext> options) : DbContex
     {
         base.OnModelCreating(modelBuilder);
 
-        // Configure entities and relationships here...
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(EntityConfiguration).Assembly);
     }
 }
