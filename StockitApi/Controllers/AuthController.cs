@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using StockitApi.Dtos;
 using StockitApi.Interfaces;
-using StockitApi.Entities;
 
 namespace StockitApi.Controllers;
 
@@ -11,10 +10,10 @@ namespace StockitApi.Controllers;
 [Route("api/[controller]")]
 [Consumes(MediaTypeNames.Application.Json)]
 [Produces(MediaTypeNames.Application.Json)]
-public class AuthController(IAuthenticationService authenticationService, IUnitOfWork unitOfWork, IAppRequestContext appRequestContext) : ControllerBase
+public class AuthController(IAuthenticationService authenticationService, IUserService userService, IAppRequestContext appRequestContext) : ControllerBase
 {
     private readonly IAuthenticationService _authService = authenticationService;
-    private readonly IUnitOfWork _unitOfWork = unitOfWork;
+    private readonly IUserService _userService = userService;
     private readonly IAppRequestContext _appRequestContext = appRequestContext;
 
     [HttpPost("login")]
@@ -42,25 +41,17 @@ public class AuthController(IAuthenticationService authenticationService, IUnitO
         return Created(string.Empty, result);
     }
 
-    // [Authorize]
-    // [HttpGet("me")]
-    // [ProducesResponseType<UserResponse>(StatusCodes.Status200OK)]
-    // [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    // // [ProducesResponseType(StatusCodes.Status404NotFound, Type = typeof(HttpErrorResponse))]
-    // public async Task<IActionResult> GetCurrentUser()
-    // {
-    //     User? result = await _unitOfWork.Users.GetByIdAsync(_appRequestContext.GetCurrentUserId());
-    //     if (result is null) return NotFound();
+    [Authorize]
+    [HttpGet("me")]
+    [ProducesResponseType<UserResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetCurrentUser()
+    {
+        UserResponse? result = await _userService.GetByIdAsync(_appRequestContext.GetCurrentUserId());
+        if (result is null) return NotFound();
 
-    //     var userResponse = new UserResponse(
-    //         result.Username, 
-    //         result.Email, 
-    //         result.FullName, 
-    //         result.RoleId, 
-    //         result.Role?.Name,
-    //         result.CreatedAt
-    //     );
-
-    //     return Ok(result);
-    // }
+        return Ok(result);
+    }
 }
+
