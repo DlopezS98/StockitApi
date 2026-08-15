@@ -4,6 +4,7 @@ using StockitApi.Interfaces;
 using StockitApi.Data.Repositories;
 using StockitApi.Models;
 using StockitApi.Services;
+using Microsoft.AspNetCore.Identity;
 
 namespace StockitApi.Extensions;
 
@@ -19,6 +20,8 @@ public static class InfrastructureServices
 
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IAppRequestContext, AppRequestContext>();
+        services.AddScoped<IPasswordHasherService, PasswordHasherService>();
+        services.AddScoped<ITokenService, TokenService>();
 
         return services;
     }
