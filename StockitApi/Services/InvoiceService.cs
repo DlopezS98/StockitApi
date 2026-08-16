@@ -21,10 +21,12 @@ public class InvoiceService(
         return invoice is null ? null : ToResponse(invoice);
     }
 
-    public async Task<IReadOnlyList<InvoiceResponse>> GetAllAsync()
+    public async Task<PagedResult<InvoiceResponse>> GetAllAsync(InvoiceQueryParameters query)
     {
-        IReadOnlyList<Invoice> invoices = await _unitOfWork.Invoices.ListAsync(new InvoiceWithDetailsSpecification());
-        return [.. invoices.Select(ToResponse)];
+        IReadOnlyList<Invoice> invoices = await _unitOfWork.Invoices.ListAsync(new InvoiceWithDetailsSpecification(query));
+        int totalCount = await _unitOfWork.Invoices.CountAsync(new InvoiceWithDetailsSpecification(query, applyPaging: false));
+
+        return new PagedResult<InvoiceResponse>([.. invoices.Select(ToResponse)], query.Page, query.PageSize, totalCount);
     }
 
     public async Task<InvoiceResponse> CreateAsync(CreateInvoiceRequest request)

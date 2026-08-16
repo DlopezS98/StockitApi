@@ -5,7 +5,7 @@ namespace StockitApi.Interfaces;
 public interface IInvoiceService
 {
     Task<InvoiceResponse?> GetByIdAsync(int id);
-    Task<IReadOnlyList<InvoiceResponse>> GetAllAsync();
+    Task<PagedResult<InvoiceResponse>> GetAllAsync(InvoiceQueryParameters query);
     Task<InvoiceResponse> CreateAsync(CreateInvoiceRequest request);
     Task<InvoiceResponse> VoidAsync(int id);
 }
