@@ -10,6 +10,8 @@ public class UnitOfWork : IUnitOfWork
     public IAsyncRepository<RefreshToken, Guid> RefreshTokens { get; private set; }
     public IAsyncRepository<Role, int> Roles { get; private set; }
     public IAsyncRepository<ApiUsageLog, Guid> ApiUsageLogs { get; private set; }
+    public IAsyncRepository<Product, int> Products { get; private set; }
+    public IAsyncRepository<Category, int> Categories { get; private set; }
 
     public UnitOfWork(StockitContext context)
     {
@@ -18,6 +20,8 @@ public class UnitOfWork : IUnitOfWork
         RefreshTokens = new EfRepository<RefreshToken, Guid>(context);
         Roles = new EfRepository<Role, int>(context);
         ApiUsageLogs = new EfRepository<ApiUsageLog, Guid>(context);
+        Products = new EfRepository<Product, int>(context);
+        Categories = new EfRepository<Category, int>(context);
     }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken)
