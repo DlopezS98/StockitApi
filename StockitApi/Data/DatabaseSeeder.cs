@@ -1,71 +1,53 @@
+using System.ComponentModel;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using StockitApi.Entities;
 using StockitApi.Interfaces;
+using PermissionCodes = StockitApi.Models.Permission;
+using RoleDefinitions = StockitApi.Models.Role;
 
 namespace StockitApi.Data;
 
 // Seeds baseline roles, permissions, role-permission mappings, and a default admin user.
 public static class DatabaseSeeder
 {
-    private const string AdminRoleName = "Admin";
+    private const string AdminRoleName = RoleDefinitions.Admin;
     private const string DefaultAdminEmail = "danny.lopez@stockit.com";
     private const string DefaultAdminPassword = "Tester017!";
 
     private static readonly (string Name, string? Description)[] Roles =
     [
-        ("Admin", "Full system access"),
-        ("Manager", "Products, inventory, invoices, analytics"),
-        ("SalesRep", "Sell products, create invoices"),
-        ("WarehouseStaff", "Manage stock"),
-        ("Auditor", "Read-only oversight"),
+        (RoleDefinitions.Admin, "Full system access"),
+        (RoleDefinitions.Manager, "Products, inventory, invoices, analytics"),
+        (RoleDefinitions.SalesRep, "Sell products, create invoices"),
+        (RoleDefinitions.WarehouseStaff, "Manage stock"),
+        (RoleDefinitions.Auditor, "Read-only oversight"),
     ];
 
-    private static readonly (string Code, string? Description)[] Permissions =
-    [
-        ("users.read", "View users"),
-        ("users.write", "Create/edit users"),
-        ("users.delete", "Deactivate users"),
-        ("roles.manage", "Manage roles/permissions"),
-        ("products.read", "View products"),
-        ("products.write", "Create/edit products"),
-        ("inventory.read", "View stock levels"),
-        ("inventory.adjust", "Adjust stock"),
-        ("customers.read", "View customers"),
-        ("customers.write", "Create/edit customers"),
-        ("invoices.create", "Create/issue invoices"),
-        ("invoices.read", "View invoices"),
-        ("invoices.update", "Update invoices"),
-        ("invoices.void", "Void invoices"),
-        ("invoices.export", "Export invoices"),
-        ("analytics.read", "View analytics"),
-        ("logs.read", "View audit logs"),
-        ("metrics.read", "View usage metrics"),
-    ];
+    // Codes and descriptions are sourced from the Permission class so both stay in sync.
+    private static readonly (string Code, string? Description)[] Permissions = GetPermissionDefinitions();
 
-    // Admin implicitly gets every permission and is not listed here.
+    // Sourced from the Role class so seeding stays in sync with the role-permission mappings.
     private static readonly Dictionary<string, string[]> RolePermissionCodes = new()
     {
-        ["Manager"] =
-        [
-            "users.read", "products.read", "products.write", "inventory.read", "inventory.adjust",
-            "customers.read", "customers.write", "invoices.create", "invoices.read", "invoices.void",
-            "invoices.export", "analytics.read", "metrics.read",
-        ],
-        ["SalesRep"] =
-        [
-            "products.read", "inventory.read", "customers.read", "customers.write",
-            "invoices.create", "invoices.read",
-        ],
-        ["WarehouseStaff"] =
-        [
-            "products.read", "inventory.read", "inventory.adjust", "invoices.read",
-        ],
-        ["Auditor"] =
-        [
-            "users.read", "products.read", "inventory.read", "customers.read", "invoices.read",
-            "invoices.export", "analytics.read", "logs.read", "metrics.read",
-        ],
+        [RoleDefinitions.Admin] = RoleDefinitions.AdminPermissions,
+        [RoleDefinitions.Manager] = RoleDefinitions.ManagerPermissions,
+        [RoleDefinitions.SalesRep] = RoleDefinitions.SalesRepPermissions,
+        [RoleDefinitions.WarehouseStaff] = RoleDefinitions.WarehouseStaffPermissions,
+        [RoleDefinitions.Auditor] = RoleDefinitions.AuditorPermissions,
     };
+
+    // Reflects over the Permission class' nested types to collect every code/description constant.
+    private static (string Code, string? Description)[] GetPermissionDefinitions()
+    {
+        return [.. typeof(PermissionCodes)
+            .GetNestedTypes(BindingFlags.Public | BindingFlags.Static)
+            .SelectMany(type => type.GetFields(BindingFlags.Public | BindingFlags.Static))
+            .Where(field => field.IsLiteral && field.FieldType == typeof(string))
+            .Select(field => (
+                Code: (string)field.GetRawConstantValue()!,
+                Description: field.GetCustomAttribute<DescriptionAttribute>()?.Description))];
+    }
 
     public static async Task SeedAsync(IServiceProvider serviceProvider)
     {
@@ -109,9 +91,6 @@ public static class DatabaseSeeder
     {
         List<Role> roles = await context.Roles.ToListAsync();
         List<Permission> permissions = await context.Permissions.ToListAsync();
-
-        Role adminRole = roles.First(r => r.Name == AdminRoleName);
-        await AddMissingRolePermissionsAsync(context, permissions, adminRole, [.. permissions.Select(p => p.Code)]);
 
         foreach ((string roleName, string[] codes) in RolePermissionCodes)
         {
