@@ -11,6 +11,7 @@ public static class ApplicationServices
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IAnalyticsService, AnalyticsService>();
         services.AddScoped<IObservabilityService, ObservabilityService>();
+        services.AddScoped<IProductService, ProductService>();
 
         return services;
     }
