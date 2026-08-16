@@ -2,6 +2,19 @@ using System.ComponentModel.DataAnnotations;
 
 namespace StockitApi.Dtos;
 
+public record InvoiceQueryParameters
+{
+    // Matches against invoice number or customer name.
+    public string? Search { get; init; }
+    public string? Status { get; init; }
+    public int? CustomerId { get; init; }
+    public int? WarehouseId { get; init; }
+    public DateTime? From { get; init; }
+    public DateTime? To { get; init; }
+    [Range(1, int.MaxValue)] public int Page { get; init; } = 1;
+    [Range(1, 200)] public int PageSize { get; init; } = 20;
+}
+
 public record InvoiceItemRequest(
     [Required] int ProductId,
     [Range(1, int.MaxValue)] int Quantity,
