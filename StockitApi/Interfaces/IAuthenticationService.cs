@@ -8,4 +8,6 @@ public interface IAuthenticationService
     Task<UserResponse> RegisterAsync(RegisterRequest request);
     Task<TokenResponse> RefreshTokenAsync(string refreshToken);
     Task LogoutAsync(string refreshToken);
+    Task<IReadOnlyList<SessionResponse>> GetActiveSessionsAsync(int userId);
+    Task RevokeSessionAsync(int userId, Guid sessionId);
 }

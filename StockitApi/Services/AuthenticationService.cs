@@ -92,6 +92,29 @@ public class AuthenticationService(
         await _unitOfWork.SaveChangesAsync();
     }
 
+    public async Task<IReadOnlyList<SessionResponse>> GetActiveSessionsAsync(int userId)
+    {
+        IReadOnlyList<RefreshToken> tokens = await _unitOfWork.RefreshTokens.GetAsync(rt => rt.UserId == userId);
+        DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
+
+        return [.. tokens
+            .Where(rt => !rt.IsRevoked && rt.ExpiresAt > now)
+            .OrderByDescending(rt => rt.CreatedAt)
+            .Select(rt => new SessionResponse(rt.Id, rt.CreatedByIp, rt.UserAgent, rt.DeviceName, rt.CreatedAt, rt.ExpiresAt))];
+    }
+
+    public async Task RevokeSessionAsync(int userId, Guid sessionId)
+    {
+        RefreshToken? refreshTokenEntity = await _unitOfWork.RefreshTokens.GetByIdAsync(sessionId);
+        if (refreshTokenEntity is null || refreshTokenEntity.UserId != userId)
+            throw new KeyNotFoundException("Session not found.");
+        if (refreshTokenEntity.IsRevoked) return;
+
+        refreshTokenEntity.RevokedAt = _timeProvider.GetUtcNow().UtcDateTime;
+        await _unitOfWork.RefreshTokens.UpdateAsync(refreshTokenEntity);
+        await _unitOfWork.SaveChangesAsync();
+    }
+
     public async Task<UserResponse> RegisterAsync(RegisterRequest request)
     {
         string email = request.Email;
