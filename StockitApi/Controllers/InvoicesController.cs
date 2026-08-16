@@ -17,10 +17,10 @@ public class InvoicesController(IInvoiceService invoiceService) : ControllerBase
 
     [RequirePermission(Permission.Invoice.Read)]
     [HttpGet]
-    [ProducesResponseType<IReadOnlyList<InvoiceResponse>>(StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetAll()
+    [ProducesResponseType<PagedResult<InvoiceResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll([FromQuery] InvoiceQueryParameters query)
     {
-        IReadOnlyList<InvoiceResponse> result = await _invoiceService.GetAllAsync();
+        PagedResult<InvoiceResponse> result = await _invoiceService.GetAllAsync(query);
         return Ok(result);
     }
 
