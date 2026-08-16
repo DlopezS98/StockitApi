@@ -36,6 +36,19 @@ public class ProductsController(IProductService productService) : ControllerBase
         return Ok(result);
     }
 
+    // Looks up a single product by barcode or QR code, e.g. for a handheld scanner.
+    [RequirePermission(Permission.Product.Read)]
+    [HttpGet("lookup")]
+    [ProducesResponseType<ProductResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Lookup([FromQuery] string code)
+    {
+        ProductResponse? result = await _productService.LookupAsync(code);
+        if (result is null) return NotFound(new { message = "No product matches that code." });
+
+        return Ok(result);
+    }
+
     [RequirePermission(Permission.Product.Write)]
     [HttpPost]
     [ProducesResponseType<ProductResponse>(StatusCodes.Status201Created)]
