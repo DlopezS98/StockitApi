@@ -32,7 +32,7 @@ public class TokenService(IOptions<JwtOptions> jwtOptions, TimeProvider timeProv
         return new RefreshTokenResult(rawToken, hashedToken, expiresAt.UtcDateTime);
     }
 
-    public (string token, DateTime expiresAtUtc) GenerateToken(User user)
+    public (string token, DateTime expiresAtUtc) GenerateToken(User user, Guid refreshTokenId)
     {
         SymmetricSecurityKey securityKey = new(Encoding.UTF8.GetBytes(_jwtOptions.SigningKey));
         var credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
@@ -44,6 +44,7 @@ public class TokenService(IOptions<JwtOptions> jwtOptions, TimeProvider timeProv
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Email, user.Email),
             new(ClaimTypes.Name, user.FullName),
+            new(PermissionAuthorization.RefreshTokenIdClaimType, refreshTokenId.ToString()),
         };
 
         IEnumerable<string> permissionCodes = user.Role!.RolePermissions
