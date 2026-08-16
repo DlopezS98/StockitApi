@@ -2,8 +2,19 @@ using System.ComponentModel;
 
 namespace StockitApi.Models;
 
+// Defines the baseline permissions and their associated descriptions.
 public static class Permission
 {
+    public static string[] GetAllPermissions()
+    {
+        return typeof(Permission)
+            .GetNestedTypes()
+            .SelectMany(nestedType => nestedType.GetFields())
+            .Where(field => field.IsLiteral && field.FieldType == typeof(string))
+            .Select(field => (string)field.GetRawConstantValue()!)
+            .ToArray();
+    }
+
     public static class User
     {
         [Description("View users")]
