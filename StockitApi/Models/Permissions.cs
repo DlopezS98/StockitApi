@@ -40,6 +40,8 @@ public static class Permission
 
         [Description("Create/edit products")]
         public const string Write = "products.write";
+        [Description("Deactivate products")]
+        public const string Delete = "products.delete";
     }
 
     public static class Inventory
