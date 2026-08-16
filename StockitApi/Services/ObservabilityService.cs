@@ -32,14 +32,20 @@ public class ObservabilityService(StockitContext context) : IObservabilityServic
         IQueryable<Entities.ApiUsageLog> logs = _context.ApiUsageLogs;
         if (from.HasValue) logs = logs.Where(l => l.CreatedAt >= from.Value);
 
-        return await logs
+        // Aggregates are computed per group in-memory - the DTO constructor call itself can't be translated to SQL.
+        var grouped = await logs
             .GroupBy(l => l.Endpoint)
-            .Select(g => new UsageMetricResponse(
-                g.Key,
-                g.Count(),
-                g.Average(l => l.ResponseTimeMs),
-                g.Count(l => l.StatusCode >= 400)))
-            .OrderByDescending(m => m.RequestCount)
+            .Select(g => new
+            {
+                Endpoint = g.Key,
+                RequestCount = g.Count(),
+                AverageResponseTimeMs = g.Average(l => l.ResponseTimeMs),
+                ErrorCount = g.Count(l => l.StatusCode >= 400),
+            })
             .ToListAsync();
+
+        return [.. grouped
+            .OrderByDescending(m => m.RequestCount)
+            .Select(m => new UsageMetricResponse(m.Endpoint, m.RequestCount, m.AverageResponseTimeMs, m.ErrorCount))];
     }
 }
