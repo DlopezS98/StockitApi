@@ -1,8 +1,10 @@
 ﻿using System.Net.Mime;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using StockitApi.Authorization;
 using StockitApi.Dtos;
 using StockitApi.Interfaces;
+using StockitApi.Models;
 
 namespace StockitApi.Controllers;
 
@@ -41,7 +43,7 @@ public class AuthController(IAuthenticationService authenticationService, IUserS
         return NoContent();
     }
 
-    [Authorize]
+    [RequirePermission(Permission.User.Write)]
     [HttpPost("register")]
     [ProducesResponseType<UserResponse>(StatusCodes.Status201Created)]
     public async Task<IActionResult> Register([FromBody] RegisterRequest request)
