@@ -19,4 +19,7 @@ public interface IUnitOfWork
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     Task<int> SaveChangesAsync();
+
+    // Wraps the operation in a database transaction, committing on success and rolling back on failure.
+    Task ExecuteInTransactionAsync(Func<Task> operation);
 }
