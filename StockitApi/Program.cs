@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using StockitApi.Data;
 using StockitApi.Extensions;
+using StockitApi.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<UsageMetricsMiddleware>();
 
 app.MapControllers();
 
