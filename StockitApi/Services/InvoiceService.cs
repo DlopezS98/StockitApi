@@ -1,3 +1,4 @@
+using System.Text.Json;
 using StockitApi.Dtos;
 using StockitApi.Entities;
 using StockitApi.Interfaces;
@@ -120,6 +121,21 @@ public class InvoiceService(
 
             await _unitOfWork.Inventories.UpdateAsync(adjustedInventories);
             await _unitOfWork.StockMovements.AddAsync(stockMovements);
+            await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+            {
+                UserId = sellerId,
+                Action = "Invoice.Create",
+                EntityType = nameof(Invoice),
+                EntityId = invoice.Id,
+                Changes = JsonSerializer.Serialize(new
+                {
+                    invoice.InvoiceNumber,
+                    invoice.WarehouseId,
+                    invoice.TotalAmount,
+                    itemCount = invoice.InvoiceItems.Count,
+                }),
+                Timestamp = now,
+            });
             await _unitOfWork.SaveChangesAsync();
         });
 
@@ -133,6 +149,8 @@ public class InvoiceService(
         if (invoice.Status == InvoiceStatus.Void) throw new InvalidOperationException("Invoice is already void.");
 
         DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
+        string previousStatus = invoice.Status;
+        int voidedBy = _appRequestContext.GetCurrentUserId();
 
         await _unitOfWork.ExecuteInTransactionAsync(async () =>
         {
@@ -167,6 +185,20 @@ public class InvoiceService(
 
             await _unitOfWork.Inventories.UpdateAsync(adjustedInventories);
             await _unitOfWork.StockMovements.AddAsync(stockMovements);
+            await _unitOfWork.AuditLogs.AddAsync(new AuditLog
+            {
+                UserId = voidedBy,
+                Action = "Invoice.Void",
+                EntityType = nameof(Invoice),
+                EntityId = invoice.Id,
+                Changes = JsonSerializer.Serialize(new
+                {
+                    invoice.InvoiceNumber,
+                    PreviousStatus = previousStatus,
+                    NewStatus = invoice.Status,
+                }),
+                Timestamp = now,
+            });
             await _unitOfWork.SaveChangesAsync();
         });
 
