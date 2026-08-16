@@ -100,11 +100,13 @@ public class InvoiceService(
             invoice.InvoiceNumber = $"INV-{now:yyyy}-{invoice.Id:D6}";
             await _unitOfWork.Invoices.UpdateAsync(invoice);
 
+            List<Inventory> adjustedInventories = [];
+            List<StockMovement> stockMovements = [];
             foreach ((Inventory inventory, int quantity, Product product) in stockDeductions)
             {
                 inventory.Quantity -= quantity;
-                await _unitOfWork.Inventories.UpdateAsync(inventory);
-                await _unitOfWork.StockMovements.AddAsync(new StockMovement
+                adjustedInventories.Add(inventory);
+                stockMovements.Add(new StockMovement
                 {
                     ProductId = product.Id,
                     WarehouseId = warehouse.Id,
@@ -116,6 +118,8 @@ public class InvoiceService(
                 });
             }
 
+            await _unitOfWork.Inventories.UpdateAsync(adjustedInventories);
+            await _unitOfWork.StockMovements.AddAsync(stockMovements);
             await _unitOfWork.SaveChangesAsync();
         });
 
@@ -136,15 +140,20 @@ public class InvoiceService(
             invoice.UpdatedAt = now;
             await _unitOfWork.Invoices.UpdateAsync(invoice);
 
+            List<int> productIds = [.. invoice.InvoiceItems.Select(item => item.ProductId)];
+            IReadOnlyList<Inventory> inventories = await _unitOfWork.Inventories.GetAsync(
+                inv => inv.WarehouseId == invoice.WarehouseId && productIds.Contains(inv.ProductId));
+            Dictionary<int, Inventory> inventoryByProductId = inventories.ToDictionary(inv => inv.ProductId);
+
+            List<Inventory> adjustedInventories = [];
+            List<StockMovement> stockMovements = [];
             foreach (InvoiceItem item in invoice.InvoiceItems)
             {
-                Inventory? inventory = await _unitOfWork.Inventories.FirstOrDefaultAsync(
-                    inv => inv.ProductId == item.ProductId && inv.WarehouseId == invoice.WarehouseId);
-                if (inventory is null) continue;
+                if (!inventoryByProductId.TryGetValue(item.ProductId, out Inventory? inventory)) continue;
 
                 inventory.Quantity += item.Quantity;
-                await _unitOfWork.Inventories.UpdateAsync(inventory);
-                await _unitOfWork.StockMovements.AddAsync(new StockMovement
+                adjustedInventories.Add(inventory);
+                stockMovements.Add(new StockMovement
                 {
                     ProductId = item.ProductId,
                     WarehouseId = invoice.WarehouseId,
@@ -156,6 +165,8 @@ public class InvoiceService(
                 });
             }
 
+            await _unitOfWork.Inventories.UpdateAsync(adjustedInventories);
+            await _unitOfWork.StockMovements.AddAsync(stockMovements);
             await _unitOfWork.SaveChangesAsync();
         });
 
