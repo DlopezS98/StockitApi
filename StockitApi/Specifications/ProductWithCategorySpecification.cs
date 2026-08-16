@@ -14,4 +14,10 @@ public class ProductWithCategorySpecification : BaseSpecification<Product>
         ApplyCriteria(p => p.Id == id);
         AddInclude(p => p.Category!);
     }
+
+    public ProductWithCategorySpecification(string code)
+    {
+        ApplyCriteria(p => p.Barcode == code || p.QrCode == code);
+        AddInclude(p => p.Category!);
+    }
 }
