@@ -91,30 +91,33 @@ public class InvoiceService(
             InvoiceItems = invoiceItems,
         };
 
-        await _unitOfWork.Invoices.AddAsync(invoice);
-        await _unitOfWork.SaveChangesAsync();
-
-        // The invoice number embeds the generated Id, so it can only be assigned after the first save.
-        invoice.InvoiceNumber = $"INV-{now:yyyy}-{invoice.Id:D6}";
-        await _unitOfWork.Invoices.UpdateAsync(invoice);
-
-        foreach ((Inventory inventory, int quantity, Product product) in stockDeductions)
+        await _unitOfWork.ExecuteInTransactionAsync(async () =>
         {
-            inventory.Quantity -= quantity;
-            await _unitOfWork.Inventories.UpdateAsync(inventory);
-            await _unitOfWork.StockMovements.AddAsync(new StockMovement
-            {
-                ProductId = product.Id,
-                WarehouseId = warehouse.Id,
-                Quantity = -quantity,
-                Reason = $"Invoice {invoice.InvoiceNumber}",
-                MovementType = StockMovementType.Sale,
-                MovementDate = now,
-                CreatedBy = sellerId,
-            });
-        }
+            await _unitOfWork.Invoices.AddAsync(invoice);
+            await _unitOfWork.SaveChangesAsync();
 
-        await _unitOfWork.SaveChangesAsync();
+            // The invoice number embeds the generated Id, so it can only be assigned after the first save.
+            invoice.InvoiceNumber = $"INV-{now:yyyy}-{invoice.Id:D6}";
+            await _unitOfWork.Invoices.UpdateAsync(invoice);
+
+            foreach ((Inventory inventory, int quantity, Product product) in stockDeductions)
+            {
+                inventory.Quantity -= quantity;
+                await _unitOfWork.Inventories.UpdateAsync(inventory);
+                await _unitOfWork.StockMovements.AddAsync(new StockMovement
+                {
+                    ProductId = product.Id,
+                    WarehouseId = warehouse.Id,
+                    Quantity = -quantity,
+                    Reason = $"Invoice {invoice.InvoiceNumber}",
+                    MovementType = StockMovementType.Sale,
+                    MovementDate = now,
+                    CreatedBy = sellerId,
+                });
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+        });
 
         return ToResponse(invoice);
     }
@@ -126,31 +129,35 @@ public class InvoiceService(
         if (invoice.Status == InvoiceStatus.Void) throw new InvalidOperationException("Invoice is already void.");
 
         DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
-        invoice.Status = InvoiceStatus.Void;
-        invoice.UpdatedAt = now;
-        await _unitOfWork.Invoices.UpdateAsync(invoice);
 
-        foreach (InvoiceItem item in invoice.InvoiceItems)
+        await _unitOfWork.ExecuteInTransactionAsync(async () =>
         {
-            Inventory? inventory = await _unitOfWork.Inventories.FirstOrDefaultAsync(
-                inv => inv.ProductId == item.ProductId && inv.WarehouseId == invoice.WarehouseId);
-            if (inventory is null) continue;
+            invoice.Status = InvoiceStatus.Void;
+            invoice.UpdatedAt = now;
+            await _unitOfWork.Invoices.UpdateAsync(invoice);
 
-            inventory.Quantity += item.Quantity;
-            await _unitOfWork.Inventories.UpdateAsync(inventory);
-            await _unitOfWork.StockMovements.AddAsync(new StockMovement
+            foreach (InvoiceItem item in invoice.InvoiceItems)
             {
-                ProductId = item.ProductId,
-                WarehouseId = invoice.WarehouseId,
-                Quantity = item.Quantity,
-                Reason = $"Void of invoice {invoice.InvoiceNumber}",
-                MovementType = StockMovementType.Return,
-                MovementDate = now,
-                CreatedBy = invoice.SellerId,
-            });
-        }
+                Inventory? inventory = await _unitOfWork.Inventories.FirstOrDefaultAsync(
+                    inv => inv.ProductId == item.ProductId && inv.WarehouseId == invoice.WarehouseId);
+                if (inventory is null) continue;
 
-        await _unitOfWork.SaveChangesAsync();
+                inventory.Quantity += item.Quantity;
+                await _unitOfWork.Inventories.UpdateAsync(inventory);
+                await _unitOfWork.StockMovements.AddAsync(new StockMovement
+                {
+                    ProductId = item.ProductId,
+                    WarehouseId = invoice.WarehouseId,
+                    Quantity = item.Quantity,
+                    Reason = $"Void of invoice {invoice.InvoiceNumber}",
+                    MovementType = StockMovementType.Return,
+                    MovementDate = now,
+                    CreatedBy = invoice.SellerId,
+                });
+            }
+
+            await _unitOfWork.SaveChangesAsync();
+        });
 
         return ToResponse(invoice);
     }
