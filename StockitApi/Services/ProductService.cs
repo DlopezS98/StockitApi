@@ -20,6 +20,12 @@ public class ProductService(
         return product is null ? null : ToResponse(product);
     }
 
+    public async Task<ProductResponse?> LookupAsync(string code)
+    {
+        Product? product = await _unitOfWork.Products.GetFirstAsync(new ProductWithCategorySpecification(code));
+        return product is null ? null : ToResponse(product);
+    }
+
     public async Task<IReadOnlyList<ProductResponse>> GetAllAsync()
     {
         IReadOnlyList<Product> products = await _unitOfWork.Products.ListAsync(new ProductWithCategorySpecification());
