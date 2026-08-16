@@ -1,6 +1,10 @@
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using StockitApi.Authorization;
+using StockitApi.Entities;
+using StockitApi.Interfaces;
 using StockitApi.Models;
 
 namespace StockitApi.Extensions;
@@ -31,6 +35,23 @@ public static class JwtServiceCollectionExtension
                 ClockSkew = TimeSpan.Zero,
                 ValidateIssuer = true,
                 ValidateAudience = true
+            };
+            options.Events = new JwtBearerEvents
+            {
+                OnTokenValidated = async context =>
+                {
+                    string? refreshTokenIdClaim = context.Principal?.FindFirstValue(PermissionAuthorization.RefreshTokenIdClaimType);
+                    if (refreshTokenIdClaim is null || !Guid.TryParse(refreshTokenIdClaim, out Guid refreshTokenId))
+                    {
+                        context.Fail("Invalid token.");
+                        return;
+                    }
+
+                    IUnitOfWork unitOfWork = context.HttpContext.RequestServices.GetRequiredService<IUnitOfWork>();
+                    RefreshToken? refreshToken = await unitOfWork.RefreshTokens.GetByIdAsync(refreshTokenId);
+                    if (refreshToken is null || refreshToken.IsRevoked)
+                        context.Fail("Session has been revoked.");
+                }
             };
         });
 

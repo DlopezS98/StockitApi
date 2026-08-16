@@ -32,10 +32,10 @@ public class AuthenticationService(
         );
         if (user is null || !verifyPassword(user)) throw new UnauthorizedAccessException("Invalid email or password.");
 
-        (string token, DateTime expires) = _tokenService.GenerateToken(user);
         RefreshTokenResult refreshTokenResult = _tokenService.GenerateRefreshToken();
         RefreshToken refreshToken = new()
         {
+            Id = Guid.NewGuid(),
             TokenHash = refreshTokenResult.HashedToken,
             UserId = user.Id,
             CreatedByIp = _appRequestContext.IpAddress,
@@ -44,6 +44,7 @@ public class AuthenticationService(
             ExpiresAt = refreshTokenResult.ExpiresAtUtc,
             CreatedAt = _timeProvider.GetUtcNow().UtcDateTime
         };
+        (string token, DateTime expires) = _tokenService.GenerateToken(user, refreshToken.Id);
         await _unitOfWork.RefreshTokens.AddAsync(refreshToken);
         await _unitOfWork.SaveChangesAsync();
 
@@ -61,10 +62,10 @@ public class AuthenticationService(
         User? user = await _unitOfWork.Users.GetFirstAsync(new UserWithPermissionsSpecification(refreshTokenEntity.UserId));
         if (user is null) throw new UnauthorizedAccessException("User not found.");
 
-        (string token, DateTime expiresAtUtc) = _tokenService.GenerateToken(user);
         RefreshTokenResult refreshTokenResult = _tokenService.GenerateRefreshToken();
         RefreshToken newRefreshToken = new()
         {
+            Id = Guid.NewGuid(),
             TokenHash = refreshTokenResult.HashedToken,
             UserId = user.Id,
             CreatedByIp = _appRequestContext.IpAddress,
@@ -73,6 +74,7 @@ public class AuthenticationService(
             ExpiresAt = refreshTokenResult.ExpiresAtUtc,
             CreatedAt = _timeProvider.GetUtcNow().UtcDateTime
         };
+        (string token, DateTime expiresAtUtc) = _tokenService.GenerateToken(user, newRefreshToken.Id);
         refreshTokenEntity.RevokedAt = _timeProvider.GetUtcNow().UtcDateTime;
         await _unitOfWork.RefreshTokens.UpdateAsync(refreshTokenEntity);
         await _unitOfWork.RefreshTokens.AddAsync(newRefreshToken);
