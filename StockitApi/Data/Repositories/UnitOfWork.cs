@@ -12,6 +12,12 @@ public class UnitOfWork : IUnitOfWork
     public IAsyncRepository<ApiUsageLog, Guid> ApiUsageLogs { get; private set; }
     public IAsyncRepository<Product, int> Products { get; private set; }
     public IAsyncRepository<Category, int> Categories { get; private set; }
+    public IAsyncRepository<Invoice, int> Invoices { get; private set; }
+    public IAsyncRepository<InvoiceItem, int> InvoiceItems { get; private set; }
+    public IAsyncRepository<Customer, int> Customers { get; private set; }
+    public IAsyncRepository<Warehouse, int> Warehouses { get; private set; }
+    public IAsyncRepository<Inventory, int> Inventories { get; private set; }
+    public IAsyncRepository<StockMovement, long> StockMovements { get; private set; }
 
     public UnitOfWork(StockitContext context)
     {
@@ -22,6 +28,12 @@ public class UnitOfWork : IUnitOfWork
         ApiUsageLogs = new EfRepository<ApiUsageLog, Guid>(context);
         Products = new EfRepository<Product, int>(context);
         Categories = new EfRepository<Category, int>(context);
+        Invoices = new EfRepository<Invoice, int>(context);
+        InvoiceItems = new EfRepository<InvoiceItem, int>(context);
+        Customers = new EfRepository<Customer, int>(context);
+        Warehouses = new EfRepository<Warehouse, int>(context);
+        Inventories = new EfRepository<Inventory, int>(context);
+        StockMovements = new EfRepository<StockMovement, long>(context);
     }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken)
