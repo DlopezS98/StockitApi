@@ -23,13 +23,14 @@ public class AnalyticsService(StockitContext context) : IAnalyticsService
         decimal averageInvoiceValue = invoiceCount == 0 ? 0 : totalRevenue / invoiceCount;
 
         List<int> invoiceIds = [.. list.Select(i => i.Id)];
-        List<TopProduct> topProducts = await _context.InvoiceItems
+        List<TopProduct> topProducts = [.. (await _context.InvoiceItems
             .Where(ii => invoiceIds.Contains(ii.InvoiceId))
-            .GroupBy(ii => ii.Product!.Name)
+            .Select(ii => new { ii.Product!.Name, ii.Quantity, ii.TotalAmount })
+            .ToListAsync())
+            .GroupBy(ii => ii.Name)
             .Select(g => new TopProduct(g.Key, g.Sum(ii => ii.Quantity), g.Sum(ii => ii.TotalAmount)))
             .OrderByDescending(tp => tp.Revenue)
-            .Take(5)
-            .ToListAsync();
+            .Take(5)];
 
         return new AnalyticsSummary(totalRevenue, invoiceCount, averageInvoiceValue, topProducts);
     }
