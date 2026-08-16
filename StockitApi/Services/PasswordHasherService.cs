@@ -29,7 +29,9 @@ public class PasswordHasherService : IPasswordHasherService
 
     public bool VerifyPassword(string hashedPassword, string providedPassword, byte[] salt)
     {
-        var hashed = SHA256.HashData(Encoding.UTF8.GetBytes(providedPassword + Convert.ToBase64String(salt)));
-        return Convert.ToBase64String(hashed) == hashedPassword;
+        byte[] storedHash = Convert.FromBase64String(hashedPassword);
+        byte[] computedHash = Rfc2898DeriveBytes.Pbkdf2(providedPassword, salt, Iterations, HashAlgorithmName.SHA256, HashByteSize);
+        // Avoid/prevents timing attacks
+        return CryptographicOperations.FixedTimeEquals(storedHash, computedHash);
     }
 }
