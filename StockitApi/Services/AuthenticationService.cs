@@ -115,6 +115,20 @@ public class AuthenticationService(
         await _unitOfWork.SaveChangesAsync();
     }
 
+    public async Task RevokeAllSessionsAsync(int userId, string? currentRefreshToken = null)
+    {
+        string? currentTokenHash = currentRefreshToken is null ? null : _tokenService.ComputeHash(currentRefreshToken);
+        IReadOnlyList<RefreshToken> tokens = await _unitOfWork.RefreshTokens.GetAsync(rt => rt.UserId == userId);
+        DateTime now = _timeProvider.GetUtcNow().UtcDateTime;
+
+        List<RefreshToken> tokensToRevoke = [.. tokens.Where(rt => !rt.IsRevoked && rt.TokenHash != currentTokenHash)];
+        foreach (RefreshToken token in tokensToRevoke)
+            token.RevokedAt = now;
+
+        await _unitOfWork.RefreshTokens.UpdateAsync(tokensToRevoke);
+        await _unitOfWork.SaveChangesAsync();
+    }
+
     public async Task<UserResponse> RegisterAsync(RegisterRequest request)
     {
         string email = request.Email;

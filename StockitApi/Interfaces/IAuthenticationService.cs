@@ -10,4 +10,5 @@ public interface IAuthenticationService
     Task LogoutAsync(string refreshToken);
     Task<IReadOnlyList<SessionResponse>> GetActiveSessionsAsync(int userId);
     Task RevokeSessionAsync(int userId, Guid sessionId);
+    Task RevokeAllSessionsAsync(int userId, string? currentRefreshToken = null);
 }
