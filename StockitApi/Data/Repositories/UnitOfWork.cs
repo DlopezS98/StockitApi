@@ -18,6 +18,7 @@ public class UnitOfWork : IUnitOfWork
     public IAsyncRepository<Warehouse, int> Warehouses { get; private set; }
     public IAsyncRepository<Inventory, int> Inventories { get; private set; }
     public IAsyncRepository<StockMovement, long> StockMovements { get; private set; }
+    public IAsyncRepository<AuditLog, Guid> AuditLogs { get; private set; }
 
     public UnitOfWork(StockitContext context)
     {
@@ -34,6 +35,7 @@ public class UnitOfWork : IUnitOfWork
         Warehouses = new EfRepository<Warehouse, int>(context);
         Inventories = new EfRepository<Inventory, int>(context);
         StockMovements = new EfRepository<StockMovement, long>(context);
+        AuditLogs = new EfRepository<AuditLog, Guid>(context);
     }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken)

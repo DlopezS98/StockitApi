@@ -16,6 +16,7 @@ public interface IUnitOfWork
     IAsyncRepository<Warehouse, int> Warehouses { get; }
     IAsyncRepository<Inventory, int> Inventories { get; }
     IAsyncRepository<StockMovement, long> StockMovements { get; }
+    IAsyncRepository<AuditLog, Guid> AuditLogs { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     Task<int> SaveChangesAsync();
