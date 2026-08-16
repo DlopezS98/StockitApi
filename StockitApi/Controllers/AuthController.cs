@@ -64,5 +64,24 @@ public class AuthController(IAuthenticationService authenticationService, IUserS
 
         return Ok(result);
     }
+
+    [Authorize]
+    [HttpGet("sessions")]
+    [ProducesResponseType<IReadOnlyList<SessionResponse>>(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetActiveSessions()
+    {
+        IReadOnlyList<SessionResponse> result = await _authService.GetActiveSessionsAsync(_appRequestContext.GetCurrentUserId());
+        return Ok(result);
+    }
+
+    [Authorize]
+    [HttpPost("sessions/{id:guid}/revoke")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RevokeSession(Guid id)
+    {
+        await _authService.RevokeSessionAsync(_appRequestContext.GetCurrentUserId(), id);
+        return NoContent();
+    }
 }
 
