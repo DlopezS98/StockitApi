@@ -83,5 +83,19 @@ public class AuthController(IAuthenticationService authenticationService, IUserS
         await _authService.RevokeSessionAsync(_appRequestContext.GetCurrentUserId(), id);
         return NoContent();
     }
+
+    [Authorize]
+    [HttpPost("sessions/revoke")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RevokeAllSessions([FromBody] RevokeAllSessionsRequest? request, [FromQuery] bool keepCurrent = false)
+    {
+        if (keepCurrent && string.IsNullOrEmpty(request?.RefreshToken))
+            return BadRequest("RefreshToken must be provided to keep the current session.");
+
+        string? currentRefreshToken = keepCurrent ? request!.RefreshToken : null;
+        await _authService.RevokeAllSessionsAsync(_appRequestContext.GetCurrentUserId(), currentRefreshToken);
+        return NoContent();
+    }
 }
 
