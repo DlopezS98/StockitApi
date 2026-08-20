@@ -162,11 +162,11 @@ public class AuthenticationService(
         await _unitOfWork.SaveChangesAsync();
 
         return new UserResponse(
-            newUser.Id, 
-            newUser.Username, 
-            newUser.Email, 
-            newUser.FullName, 
-            role.Id, 
+            newUser.Id,
+            newUser.Username,
+            newUser.Email,
+            newUser.FullName,
+            role.Id,
             role.Name,
             newUser.CreatedAt
         );

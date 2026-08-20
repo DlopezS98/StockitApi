@@ -17,7 +17,7 @@ public class StockMovement : BaseEntity<long>
     public User? CreatedByUser { get; set; }
 }
 
-public static class StockMovementType 
+public static class StockMovementType
 {
     public const string Sale = "Sale";
     public const string Restock = "Restock";

@@ -5,7 +5,7 @@ using System.Linq.Expressions;
 
 namespace StockitApi.Data.Repositories;
 
-public class EfRepository<TEntity, Tkey>(StockitContext context) 
+public class EfRepository<TEntity, Tkey>(StockitContext context)
     : IAsyncRepository<TEntity, Tkey> where TEntity : BaseEntity<Tkey>
 {
     private readonly StockitContext _context = context;

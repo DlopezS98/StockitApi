@@ -16,7 +16,7 @@ public class AppRequestContext : IAppRequestContext
     {
         var userIdClaim = _httpContextAccessor.HttpContext?.User?.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (userIdClaim is not null && int.TryParse(userIdClaim, out int userId)) return userId;
-        
+
         throw new InvalidOperationException("User ID claim is missing or invalid.");
     }
     public string IpAddress => _httpContextAccessor.HttpContext?.Connection?.RemoteIpAddress?.ToString() ?? string.Empty;
