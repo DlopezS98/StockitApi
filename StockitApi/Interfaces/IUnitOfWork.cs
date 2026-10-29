@@ -7,6 +7,7 @@ public interface IUnitOfWork
     IAsyncRepository<User, int> Users { get; }
     IAsyncRepository<RefreshToken, Guid> RefreshTokens { get; }
     IAsyncRepository<Role, int> Roles { get; }
+    IAsyncRepository<Permission, int> Permissions { get; }
     IAsyncRepository<ApiUsageLog, Guid> ApiUsageLogs { get; }
     IAsyncRepository<Product, int> Products { get; }
     IAsyncRepository<Category, int> Categories { get; }
@@ -17,6 +18,9 @@ public interface IUnitOfWork
     IAsyncRepository<Inventory, int> Inventories { get; }
     IAsyncRepository<StockMovement, long> StockMovements { get; }
     IAsyncRepository<AuditLog, Guid> AuditLogs { get; }
+
+    // RolePermission is a keyless join entity, so it can't go through the generic repository.
+    void RemoveRolePermissions(IEnumerable<RolePermission> rolePermissions);
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
     Task<int> SaveChangesAsync();

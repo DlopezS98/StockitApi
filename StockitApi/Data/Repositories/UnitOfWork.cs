@@ -9,6 +9,7 @@ public class UnitOfWork : IUnitOfWork
     public IAsyncRepository<User, int> Users { get; private set; }
     public IAsyncRepository<RefreshToken, Guid> RefreshTokens { get; private set; }
     public IAsyncRepository<Role, int> Roles { get; private set; }
+    public IAsyncRepository<Permission, int> Permissions { get; private set; }
     public IAsyncRepository<ApiUsageLog, Guid> ApiUsageLogs { get; private set; }
     public IAsyncRepository<Product, int> Products { get; private set; }
     public IAsyncRepository<Category, int> Categories { get; private set; }
@@ -26,6 +27,7 @@ public class UnitOfWork : IUnitOfWork
         Users = new EfRepository<User, int>(context);
         RefreshTokens = new EfRepository<RefreshToken, Guid>(context);
         Roles = new EfRepository<Role, int>(context);
+        Permissions = new EfRepository<Permission, int>(context);
         ApiUsageLogs = new EfRepository<ApiUsageLog, Guid>(context);
         Products = new EfRepository<Product, int>(context);
         Categories = new EfRepository<Category, int>(context);
@@ -36,6 +38,11 @@ public class UnitOfWork : IUnitOfWork
         Inventories = new EfRepository<Inventory, int>(context);
         StockMovements = new EfRepository<StockMovement, long>(context);
         AuditLogs = new EfRepository<AuditLog, Guid>(context);
+    }
+
+    public void RemoveRolePermissions(IEnumerable<RolePermission> rolePermissions)
+    {
+        _context.RolePermissions.RemoveRange(rolePermissions);
     }
 
     public Task<int> SaveChangesAsync(CancellationToken cancellationToken)
