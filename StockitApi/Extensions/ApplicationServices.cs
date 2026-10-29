@@ -9,6 +9,7 @@ public static class ApplicationServices
     {
         services.AddScoped<IAuthenticationService, AuthenticationService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IAnalyticsService, AnalyticsService>();
         services.AddScoped<IObservabilityService, ObservabilityService>();
         services.AddScoped<IProductService, ProductService>();
