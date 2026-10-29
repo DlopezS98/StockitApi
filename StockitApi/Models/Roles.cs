@@ -9,6 +9,8 @@ public static class Role
     public const string WarehouseStaff = "WarehouseStaff";
     public const string Auditor = "Auditor";
 
+    public static readonly string[] BuiltInRoles = [Admin, Manager, SalesRep, WarehouseStaff, Auditor];
+
     public static readonly string[] AdminPermissions = Permission.GetAllPermissions();
     public static readonly string[] ManagerPermissions =
     [
