@@ -29,6 +29,9 @@ public static class Permission
 
     public static class Role
     {
+        [Description("View roles/permissions")]
+        public const string Read = "roles.read";
+
         [Description("Manage roles/permissions")]
         public const string Manage = "roles.manage";
     }

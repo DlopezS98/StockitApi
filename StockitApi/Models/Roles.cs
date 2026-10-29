@@ -38,5 +38,6 @@ public static class Role
         Permission.User.Read, Permission.Product.Read, Permission.Inventory.Read,
         Permission.Customer.Read, Permission.Invoice.Read, Permission.Invoice.Export,
         Permission.Analytics.Read, Permission.Logs.Read, Permission.Metrics.Read,
+        Permission.Role.Read, Permission.Role.Manage,
     ];
 }
